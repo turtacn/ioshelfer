@@ -1,12 +1,12 @@
 package remediation
 
 import (
-	"github.com/uber-go/zap"
-	"time"
 	"github.com/turtacn/ioshelfer/internal/common/errors"
 	"github.com/turtacn/ioshelfer/internal/common/logger"
 	"github.com/turtacn/ioshelfer/internal/common/types/enum"
 	"github.com/turtacn/ioshelfer/internal/core/detection"
+	"go.uber.org/zap"
+	"time"
 )
 
 // Config defines the configuration for the remediation engine.
@@ -19,11 +19,11 @@ type Config struct {
 
 // RemediationResult represents the result of a remediation action.
 type RemediationResult struct {
-	DeviceType     enum.DeviceType
-	DeviceID       string
-	Action         string // e.g., "isolated", "recovered"
-	Success        bool
-	Error          error
+	DeviceType enum.DeviceType
+	DeviceID   string
+	Action     string // e.g., "isolated", "recovered"
+	Success    bool
+	Error      error
 }
 
 // Remediator defines the interface for remediation actions.
