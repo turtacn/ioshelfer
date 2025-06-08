@@ -1,0 +1,851 @@
+// api/proto/ioshelfer.proto
+syntax = "proto3";
+
+package ioshelfer.v1;
+
+option go_package = "your_project/api/proto;ioshelfer";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// IOSHelperService defines the main gRPC service for I/O health monitoring and prediction
+service IOSHelperService {
+    // Health Check Services
+    rpc CheckDiskHealth(DiskHealthRequest) returns (DiskHealthResponse);
+    rpc CheckRAIDHealth(RAIDHealthRequest) returns (RAIDHealthResponse);
+    rpc CheckNetworkHealth(NetworkHealthRequest) returns (NetworkHealthResponse);
+    rpc CheckOverallHealth(OverallHealthRequest) returns (OverallHealthResponse);
+
+    // Prediction Services
+    rpc PredictDiskFailure(DiskPredictionRequest) returns (DiskPredictionResponse);
+    rpc PredictRAIDFailure(RAIDPredictionRequest) returns (RAIDPredictionResponse);
+    rpc PredictNetworkIssues(NetworkPredictionRequest) returns (NetworkPredictionResponse);
+    rpc PredictOverallHealth(OverallPredictionRequest) returns (OverallPredictionResponse);
+
+    // Real-time Data Sync Services
+    rpc SyncWithCMDB(CMDBSyncRequest) returns (CMDBSyncResponse);
+    rpc SyncWithITSM(ITSMSyncRequest) returns (ITSMSyncResponse);
+    rpc GetSyncStatus(SyncStatusRequest) returns (SyncStatusResponse);
+
+    // Streaming Services
+    rpc StreamHealthMetrics(HealthStreamRequest) returns (stream HealthMetricsEvent);
+    rpc StreamPredictionUpdates(PredictionStreamRequest) returns (stream PredictionEvent);
+
+    // Configuration Services
+    rpc UpdateConfiguration(ConfigurationUpdateRequest) returns (ConfigurationUpdateResponse);
+    rpc GetConfiguration(ConfigurationRequest) returns (ConfigurationResponse);
+}
+
+// Common Types
+message SystemInfo {
+    string hostname = 1;
+    string ip_address = 2;
+    string os_type = 3;
+    string os_version = 4;
+    google.protobuf.Timestamp last_updated = 5;
+}
+
+message MetricValue {
+    string name = 1;
+    double value = 2;
+    string unit = 3;
+    google.protobuf.Timestamp timestamp = 4;
+}
+
+message HealthStatus {
+    enum Status {
+        UNKNOWN = 0;
+        HEALTHY = 1;
+        WARNING = 2;
+        CRITICAL = 3;
+        FAILED = 4;
+    }
+    Status status = 1;
+    string message = 2;
+    double score = 3; // Health score 0-100
+    repeated MetricValue metrics = 4;
+}
+
+// Disk Health Messages
+message DiskHealthRequest {
+    string system_id = 1;
+    repeated string disk_ids = 2; // Empty means all disks
+    bool include_smart_data = 3;
+    bool include_performance_metrics = 4;
+}
+
+message DiskInfo {
+    string disk_id = 1;
+    string device_path = 2;
+    string model = 3;
+    string serial_number = 4;
+    uint64 capacity_bytes = 5;
+    string disk_type = 6; // SSD, HDD, NVMe
+    string interface_type = 7; // SATA, SAS, NVMe
+    google.protobuf.Timestamp install_date = 8;
+}
+
+message DiskMetrics {
+    string disk_id = 1;
+    double read_iops = 2;
+    double write_iops = 3;
+    double read_throughput_mbps = 4;
+    double write_throughput_mbps = 5;
+    double response_time_ms = 6;
+    double queue_depth = 7;
+    double utilization_percent = 8;
+    double temperature_celsius = 9;
+    repeated SMARTAttribute smart_attributes = 10;
+}
+
+message SMARTAttribute {
+    uint32 id = 1;
+    string name = 2;
+    uint32 value = 3;
+    uint32 threshold = 4;
+    bool is_critical = 5;
+    string raw_value = 6;
+}
+
+message DiskHealthResponse {
+    string request_id = 1;
+    SystemInfo system_info = 2;
+    repeated DiskHealthStatus disk_status = 3;
+    HealthStatus overall_status = 4;
+    google.protobuf.Timestamp timestamp = 5;
+    string error_message = 6;
+}
+
+message DiskHealthStatus {
+    DiskInfo disk_info = 1;
+    DiskMetrics metrics = 2;
+    HealthStatus health_status = 3;
+    repeated string warnings = 4;
+    repeated string errors = 5;
+}
+
+// RAID Health Messages
+message RAIDHealthRequest {
+    string system_id = 1;
+    repeated string raid_ids = 2; // Empty means all RAID arrays
+    bool include_disk_details = 3;
+    bool include_performance_metrics = 4;
+}
+
+message RAIDInfo {
+    string raid_id = 1;
+    string array_name = 2;
+    string raid_level = 3; // RAID0, RAID1, RAID5, RAID6, RAID10
+    uint32 disk_count = 4;
+    uint64 capacity_bytes = 5;
+    uint64 used_bytes = 6;
+    string status = 7; // Online, Degraded, Failed
+    google.protobuf.Timestamp created_date = 8;
+}
+
+message RAIDMetrics {
+    string raid_id = 1;
+    double read_iops = 2;
+    double write_iops = 3;
+    double read_throughput_mbps = 4;
+    double write_throughput_mbps = 5;
+    double response_time_ms = 6;
+    double rebuild_progress_percent = 7;
+    bool is_rebuilding = 8;
+    repeated string member_disk_ids = 9;
+}
+
+message RAIDHealthResponse {
+    string request_id = 1;
+    SystemInfo system_info = 2;
+    repeated RAIDHealthStatus raid_status = 3;
+    HealthStatus overall_status = 4;
+    google.protobuf.Timestamp timestamp = 5;
+    string error_message = 6;
+}
+
+message RAIDHealthStatus {
+    RAIDInfo raid_info = 1;
+    RAIDMetrics metrics = 2;
+    HealthStatus health_status = 3;
+    repeated DiskHealthStatus member_disks = 4;
+    repeated string warnings = 5;
+    repeated string errors = 6;
+}
+
+// Network Health Messages
+message NetworkHealthRequest {
+    string system_id = 1;
+    repeated string interface_names = 2; // Empty means all interfaces
+    bool include_performance_metrics = 3;
+    bool include_connectivity_test = 4;
+    repeated string test_targets = 5; // IPs/hostnames to test connectivity
+}
+
+message NetworkInterfaceInfo {
+    string interface_name = 1;
+    string mac_address = 2;
+    repeated string ip_addresses = 3;
+    string interface_type = 4; // Ethernet, WiFi, Loopback
+    uint64 speed_mbps = 5;
+    bool is_up = 6;
+    string driver = 7;
+}
+
+message NetworkMetrics {
+    string interface_name = 1;
+    double rx_bytes_per_sec = 2;
+    double tx_bytes_per_sec = 3;
+    double rx_packets_per_sec = 4;
+    double tx_packets_per_sec = 5;
+    double rx_errors_per_sec = 6;
+    double tx_errors_per_sec = 7;
+    double rx_dropped_per_sec = 8;
+    double tx_dropped_per_sec = 9;
+    double utilization_percent = 10;
+    double latency_ms = 11;
+    double packet_loss_percent = 12;
+}
+
+message ConnectivityTest {
+    string target = 1;
+    bool is_reachable = 2;
+    double latency_ms = 3;
+    double packet_loss_percent = 4;
+    string error_message = 5;
+}
+
+message NetworkHealthResponse {
+    string request_id = 1;
+    SystemInfo system_info = 2;
+    repeated NetworkHealthStatus interface_status = 3;
+    repeated ConnectivityTest connectivity_tests = 4;
+    HealthStatus overall_status = 5;
+    google.protobuf.Timestamp timestamp = 6;
+    string error_message = 7;
+}
+
+message NetworkHealthStatus {
+    NetworkInterfaceInfo interface_info = 1;
+    NetworkMetrics metrics = 2;
+    HealthStatus health_status = 3;
+    repeated string warnings = 4;
+    repeated string errors = 5;
+}
+
+// Overall Health Messages
+message OverallHealthRequest {
+    string system_id = 1;
+    bool include_disk_health = 2;
+    bool include_raid_health = 3;
+    bool include_network_health = 4;
+    bool include_detailed_metrics = 5;
+}
+
+message OverallHealthResponse {
+    string request_id = 1;
+    SystemInfo system_info = 2;
+    HealthStatus overall_status = 3;
+    DiskHealthResponse disk_health = 4;
+    RAIDHealthResponse raid_health = 5;
+    NetworkHealthResponse network_health = 6;
+    repeated string recommendations = 7;
+    google.protobuf.Timestamp timestamp = 8;
+    string error_message = 9;
+}
+
+// Prediction Messages
+message DiskPredictionRequest {
+    string system_id = 1;
+    repeated string disk_ids = 2;
+    uint32 prediction_days = 3; // How many days ahead to predict
+    bool include_historical_data = 4;
+}
+
+message PredictionResult {
+    enum RiskLevel {
+        UNKNOWN_RISK = 0;
+        LOW = 1;
+        MEDIUM = 2;
+        HIGH = 3;
+        CRITICAL = 4;
+    }
+    RiskLevel risk_level = 1;
+    double confidence_score = 2; // 0-1
+    google.protobuf.Timestamp predicted_failure_date = 3;
+    repeated string risk_factors = 4;
+    repeated string recommendations = 5;
+    string model_version = 6;
+}
+
+message DiskPredictionResponse {
+    string request_id = 1;
+    SystemInfo system_info = 2;
+    repeated DiskPredictionResult disk_predictions = 3;
+    google.protobuf.Timestamp timestamp = 4;
+    string error_message = 5;
+}
+
+message DiskPredictionResult {
+    string disk_id = 1;
+    PredictionResult prediction = 2;
+    repeated MetricValue historical_trends = 3;
+}
+
+message RAIDPredictionRequest {
+    string system_id = 1;
+    repeated string raid_ids = 2;
+    uint32 prediction_days = 3;
+    bool include_member_disk_predictions = 4;
+}
+
+message RAIDPredictionResponse {
+    string request_id = 1;
+    SystemInfo system_info = 2;
+    repeated RAIDPredictionResult raid_predictions = 3;
+    google.protobuf.Timestamp timestamp = 4;
+    string error_message = 5;
+}
+
+message RAIDPredictionResult {
+    string raid_id = 1;
+    PredictionResult prediction = 2;
+    repeated DiskPredictionResult member_disk_predictions = 3;
+}
+
+message NetworkPredictionRequest {
+    string system_id = 1;
+    repeated string interface_names = 2;
+    uint32 prediction_days = 3;
+    bool include_bandwidth_prediction = 4;
+}
+
+message NetworkPredictionResponse {
+    string request_id = 1;
+    SystemInfo system_info = 2;
+    repeated NetworkPredictionResult network_predictions = 3;
+    google.protobuf.Timestamp timestamp = 4;
+    string error_message = 5;
+}
+
+message NetworkPredictionResult {
+    string interface_name = 1;
+    PredictionResult prediction = 2;
+    repeated MetricValue bandwidth_forecast = 3;
+}
+
+message OverallPredictionRequest {
+    string system_id = 1;
+    uint32 prediction_days = 2;
+    bool include_component_predictions = 3;
+}
+
+message OverallPredictionResponse {
+    string request_id = 1;
+    SystemInfo system_info = 2;
+    PredictionResult overall_prediction = 3;
+    DiskPredictionResponse disk_predictions = 4;
+    RAIDPredictionResponse raid_predictions = 5;
+    NetworkPredictionResponse network_predictions = 6;
+    repeated string critical_actions = 7;
+    google.protobuf.Timestamp timestamp = 8;
+    string error_message = 9;
+}
+
+// CMDB Sync Messages
+message CMDBSyncRequest {
+    string system_id = 1;
+    string cmdb_endpoint = 2;
+    string auth_token = 3;
+    bool full_sync = 4; // true for full sync, false for incremental
+    repeated string data_types = 5; // disk, raid, network
+}
+
+message CMDBAsset {
+    string asset_id = 1;
+    string asset_type = 2; // server, disk, network_interface
+    string hostname = 3;
+    map<string, string> attributes = 4;
+    google.protobuf.Timestamp last_updated = 5;
+}
+
+message CMDBSyncResponse {
+    string request_id = 1;
+    bool success = 2;
+    uint32 synced_assets_count = 3;
+    repeated CMDBAsset synced_assets = 4;
+    repeated string sync_errors = 5;
+    google.protobuf.Timestamp sync_timestamp = 6;
+    string error_message = 7;
+}
+
+// ITSM Sync Messages
+message ITSMSyncRequest {
+    string system_id = 1;
+    string itsm_endpoint = 2;
+    string auth_token = 3;
+    bool create_incidents = 4;
+    repeated HealthAlertLevel alert_levels = 5;
+}
+
+enum HealthAlertLevel {
+    UNKNOWN_ALERT = 0;
+    INFO = 1;
+    WARNING = 2;
+    CRITICAL = 3;
+    EMERGENCY = 4;
+}
+
+message ITSMIncident {
+    string incident_id = 1;
+    string title = 2;
+    string description = 3;
+    HealthAlertLevel severity = 4;
+    string category = 5; // disk, raid, network
+    string affected_system = 6;
+    google.protobuf.Timestamp created_at = 7;
+    string status = 8; // open, in_progress, resolved
+}
+
+message ITSMSyncResponse {
+    string request_id = 1;
+    bool success = 2;
+    uint32 created_incidents_count = 3;
+    repeated ITSMIncident created_incidents = 4;
+    repeated string sync_errors = 5;
+    google.protobuf.Timestamp sync_timestamp = 6;
+    string error_message = 7;
+}
+
+// Sync Status Messages
+message SyncStatusRequest {
+    string system_id = 1;
+    repeated string sync_types = 2; // cmdb, itsm
+}
+
+message SyncStatus {
+    string sync_type = 1;
+    bool is_enabled = 2;
+    google.protobuf.Timestamp last_sync = 3;
+    google.protobuf.Timestamp next_sync = 4;
+    string status = 5; // success, failed, in_progress
+    string error_message = 6;
+    uint32 success_count = 7;
+    uint32 failure_count = 8;
+}
+
+message SyncStatusResponse {
+    string request_id = 1;
+    repeated SyncStatus sync_statuses = 2;
+    google.protobuf.Timestamp timestamp = 3;
+    string error_message = 4;
+}
+
+// Streaming Messages
+message HealthStreamRequest {
+    string system_id = 1;
+    repeated string component_types = 2; // disk, raid, network
+    uint32 interval_seconds = 3; // Streaming interval
+    repeated string metric_names = 4; // Specific metrics to stream
+}
+
+message HealthMetricsEvent {
+    string system_id = 1;
+    string component_type = 2;
+    string component_id = 3;
+    repeated MetricValue metrics = 4;
+    HealthStatus health_status = 5;
+    google.protobuf.Timestamp timestamp = 6;
+    string event_type = 7; // metric_update, status_change, alert
+}
+
+message PredictionStreamRequest {
+    string system_id = 1;
+    repeated string component_types = 2;
+    uint32 update_interval_minutes = 3;
+    double min_confidence_threshold = 4; // Only stream predictions above this confidence
+}
+
+message PredictionEvent {
+    string system_id = 1;
+    string component_type = 2;
+    string component_id = 3;
+    PredictionResult prediction = 4;
+    google.protobuf.Timestamp timestamp = 5;
+    string event_type = 6; // prediction_update, risk_change, alert
+    bool is_new_prediction = 7;
+}
+
+// Configuration Messages
+message ConfigurationUpdateRequest {
+    string system_id = 1;
+    SystemConfiguration configuration = 2;
+}
+
+message SystemConfiguration {
+    // Health Check Configuration
+    HealthCheckConfig health_check = 1;
+
+    // Prediction Configuration
+    PredictionConfig prediction = 2;
+
+    // Sync Configuration
+    SyncConfig sync = 3;
+
+    // Alert Configuration
+    AlertConfig alerts = 4;
+
+    // General Settings
+    GeneralConfig general = 5;
+}
+
+message HealthCheckConfig {
+    uint32 check_interval_seconds = 1;
+    bool enable_smart_monitoring = 2;
+    bool enable_performance_monitoring = 3;
+    repeated string monitored_disk_types = 4;
+    repeated string monitored_raid_levels = 5;
+    repeated string monitored_network_interfaces = 6;
+
+    // Thresholds
+    DiskThresholds disk_thresholds = 7;
+    RAIDThresholds raid_thresholds = 8;
+    NetworkThresholds network_thresholds = 9;
+}
+
+message DiskThresholds {
+    double temperature_warning_celsius = 1;
+    double temperature_critical_celsius = 2;
+    double utilization_warning_percent = 3;
+    double utilization_critical_percent = 4;
+    double response_time_warning_ms = 5;
+    double response_time_critical_ms = 6;
+    repeated SMARTThreshold smart_thresholds = 7;
+}
+
+message SMARTThreshold {
+    uint32 attribute_id = 1;
+    string attribute_name = 2;
+    uint32 warning_threshold = 3;
+    uint32 critical_threshold = 4;
+}
+
+message RAIDThresholds {
+    double utilization_warning_percent = 1;
+    double utilization_critical_percent = 2;
+    double response_time_warning_ms = 3;
+    double response_time_critical_ms = 4;
+    uint32 degraded_disk_warning_count = 5;
+    uint32 degraded_disk_critical_count = 6;
+}
+
+message NetworkThresholds {
+    double utilization_warning_percent = 1;
+    double utilization_critical_percent = 2;
+    double latency_warning_ms = 3;
+    double latency_critical_ms = 4;
+    double packet_loss_warning_percent = 5;
+    double packet_loss_critical_percent = 6;
+    double error_rate_warning_percent = 7;
+    double error_rate_critical_percent = 8;
+}
+
+message PredictionConfig {
+    bool enable_prediction = 1;
+    uint32 prediction_interval_hours = 2;
+    uint32 prediction_horizon_days = 3;
+    double min_confidence_threshold = 4;
+
+    // Model Configuration
+    repeated ModelConfig models = 5;
+
+    // Data Retention
+    uint32 historical_data_retention_days = 6;
+}
+
+message ModelConfig {
+    string model_type = 1; // disk_failure, raid_failure, network_issue
+    string model_version = 2;
+    string model_path = 3;
+    map<string, string> model_parameters = 4;
+    bool is_enabled = 5;
+}
+
+message SyncConfig {
+    // CMDB Configuration
+    CMDBConfig cmdb = 1;
+
+    // ITSM Configuration
+    ITSMConfig itsm = 2;
+}
+
+message CMDBConfig {
+    bool enable_sync = 1;
+    string endpoint_url = 2;
+    string auth_method = 3; // basic, token, oauth
+    string username = 4;
+    string password = 5;
+    string token = 6;
+    uint32 sync_interval_minutes = 7;
+    bool enable_full_sync = 8;
+    uint32 full_sync_interval_hours = 9;
+    repeated string sync_data_types = 10;
+    uint32 timeout_seconds = 11;
+    uint32 retry_count = 12;
+}
+
+message ITSMConfig {
+    bool enable_sync = 1;
+    string endpoint_url = 2;
+    string auth_method = 3;
+    string username = 4;
+    string password = 5;
+    string token = 6;
+    bool auto_create_incidents = 7;
+    repeated HealthAlertLevel incident_levels = 8;
+    string default_category = 9;
+    string default_priority = 10;
+    uint32 timeout_seconds = 11;
+    uint32 retry_count = 12;
+}
+
+message AlertConfig {
+    bool enable_alerts = 1;
+    repeated AlertRule alert_rules = 2;
+    NotificationConfig notifications = 3;
+}
+
+message AlertRule {
+    string rule_id = 1;
+    string rule_name = 2;
+    string component_type = 3; // disk, raid, network, system
+    string metric_name = 4;
+    string condition = 5; // greater_than, less_than, equals, not_equals
+    double threshold_value = 6;
+    HealthAlertLevel severity = 7;
+    uint32 duration_seconds = 8; // Alert after threshold exceeded for this duration
+    bool is_enabled = 9;
+    string description = 10;
+}
+
+message NotificationConfig {
+    repeated NotificationChannel channels = 1;
+}
+
+message NotificationChannel {
+    string channel_id = 1;
+    string channel_type = 2; // email, slack, webhook, sms
+    string endpoint = 3; // email address, webhook URL, etc.
+    map<string, string> parameters = 4; // Additional channel-specific parameters
+    repeated HealthAlertLevel alert_levels = 5; // Which alert levels to send to this channel
+    bool is_enabled = 6;
+}
+
+message GeneralConfig {
+    string log_level = 1; // debug, info, warn, error
+    string log_format = 2; // json, text
+    string data_directory = 3;
+    uint32 max_concurrent_checks = 4;
+    uint32 api_rate_limit_per_minute = 5;
+    string timezone = 6;
+    bool enable_metrics_export = 7;
+    string metrics_export_format = 8; // prometheus, json, csv
+    uint32 metrics_export_interval_seconds = 9;
+}
+
+message ConfigurationUpdateResponse {
+    string request_id = 1;
+    bool success = 2;
+    repeated string validation_errors = 3;
+    google.protobuf.Timestamp updated_at = 4;
+    string error_message = 5;
+}
+
+message ConfigurationRequest {
+    string system_id = 1;
+    repeated string config_sections = 2; // Empty means all sections
+}
+
+message ConfigurationResponse {
+    string request_id = 1;
+    SystemConfiguration configuration = 2;
+    google.protobuf.Timestamp last_updated = 3;
+    string error_message = 4;
+}
+
+// Batch Operations
+message BatchHealthCheckRequest {
+    repeated string system_ids = 1;
+    bool include_disk_health = 2;
+    bool include_raid_health = 3;
+    bool include_network_health = 4;
+    uint32 timeout_seconds = 5;
+}
+
+message BatchHealthCheckResponse {
+    string request_id = 1;
+    repeated SystemHealthResult results = 2;
+    uint32 success_count = 3;
+    uint32 failure_count = 4;
+    google.protobuf.Timestamp timestamp = 5;
+}
+
+message SystemHealthResult {
+    string system_id = 1;
+    bool success = 2;
+    OverallHealthResponse health_response = 3;
+    string error_message = 4;
+}
+
+// Historical Data Messages
+message HistoricalDataRequest {
+    string system_id = 1;
+    string component_type = 2; // disk, raid, network
+    string component_id = 3;
+    google.protobuf.Timestamp start_time = 4;
+    google.protobuf.Timestamp end_time = 5;
+    repeated string metric_names = 6;
+    uint32 aggregation_interval_seconds = 7; // Data aggregation interval
+    string aggregation_method = 8; // avg, max, min, sum
+}
+
+message HistoricalDataResponse {
+    string request_id = 1;
+    string system_id = 2;
+    string component_type = 3;
+    string component_id = 4;
+    repeated HistoricalMetricSeries metric_series = 5;
+    google.protobuf.Timestamp timestamp = 6;
+    string error_message = 7;
+}
+
+message HistoricalMetricSeries {
+    string metric_name = 1;
+    string unit = 2;
+    repeated HistoricalDataPoint data_points = 3;
+}
+
+message HistoricalDataPoint {
+    google.protobuf.Timestamp timestamp = 1;
+    double value = 2;
+}
+
+// Extended Service Definition for Additional Operations
+service IOSHelperExtendedService {
+    // Batch Operations
+    rpc BatchHealthCheck(BatchHealthCheckRequest) returns (BatchHealthCheckResponse);
+
+    // Historical Data
+    rpc GetHistoricalData(HistoricalDataRequest) returns (HistoricalDataResponse);
+
+    // System Management
+    rpc RegisterSystem(SystemRegistrationRequest) returns (SystemRegistrationResponse);
+    rpc UnregisterSystem(SystemUnregistrationRequest) returns (SystemUnregistrationResponse);
+    rpc ListSystems(ListSystemsRequest) returns (ListSystemsResponse);
+
+    // Health Check Scheduling
+    rpc ScheduleHealthCheck(ScheduleHealthCheckRequest) returns (ScheduleHealthCheckResponse);
+    rpc CancelScheduledCheck(CancelScheduledCheckRequest) returns (CancelScheduledCheckResponse);
+    rpc ListScheduledChecks(ListScheduledChecksRequest) returns (ListScheduledChecksResponse);
+}
+
+// System Management Messages
+message SystemRegistrationRequest {
+    SystemInfo system_info = 1;
+    SystemConfiguration initial_config = 2;
+}
+
+message SystemRegistrationResponse {
+    string system_id = 1;
+    bool success = 2;
+    string registration_token = 3;
+    google.protobuf.Timestamp registered_at = 4;
+    string error_message = 5;
+}
+
+message SystemUnregistrationRequest {
+    string system_id = 1;
+    bool force_removal = 2; // Remove even if checks are scheduled
+}
+
+message SystemUnregistrationResponse {
+    bool success = 1;
+    google.protobuf.Timestamp unregistered_at = 2;
+    string error_message = 3;
+}
+
+message ListSystemsRequest {
+    uint32 page_size = 1;
+    string page_token = 2;
+    repeated string system_status_filter = 3; // active, inactive, error
+}
+
+message ListSystemsResponse {
+    repeated RegisteredSystem systems = 1;
+    string next_page_token = 2;
+    uint32 total_count = 3;
+}
+
+message RegisteredSystem {
+    string system_id = 1;
+    SystemInfo system_info = 2;
+    string registration_status = 3; // active, inactive, error
+    google.protobuf.Timestamp last_heartbeat = 4;
+    google.protobuf.Timestamp registered_at = 5;
+}
+
+// Scheduling Messages
+message ScheduleHealthCheckRequest {
+    string system_id = 1;
+    string schedule_name = 2;
+    string cron_expression = 3; // Standard cron format
+    HealthCheckType check_type = 4;
+    map<string, string> check_parameters = 5;
+    bool is_enabled = 6;
+}
+
+enum HealthCheckType {
+    UNKNOWN_CHECK = 0;
+    DISK_CHECK = 1;
+    RAID_CHECK = 2;
+    NETWORK_CHECK = 3;
+    OVERALL_CHECK = 4;
+    PREDICTION_CHECK = 5;
+}
+
+message ScheduleHealthCheckResponse {
+    string schedule_id = 1;
+    bool success = 2;
+    google.protobuf.Timestamp next_run = 3;
+    string error_message = 4;
+}
+
+message CancelScheduledCheckRequest {
+    string schedule_id = 1;
+}
+
+message CancelScheduledCheckResponse {
+    bool success = 1;
+    string error_message = 2;
+}
+
+message ListScheduledChecksRequest {
+    string system_id = 1;
+    bool include_disabled = 2;
+}
+
+message ListScheduledChecksResponse {
+    repeated ScheduledCheck scheduled_checks = 1;
+}
+
+message ScheduledCheck {
+    string schedule_id = 1;
+    string system_id = 2;
+    string schedule_name = 3;
+    string cron_expression = 4;
+    HealthCheckType check_type = 5;
+    bool is_enabled = 6;
+    google.protobuf.Timestamp next_run = 7;
+    google.protobuf.Timestamp last_run = 8;
+    string last_run_status = 9; // success, failed, skipped
+}
