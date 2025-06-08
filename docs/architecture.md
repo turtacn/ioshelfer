@@ -43,8 +43,9 @@
 `ioshelfer` 采用**控制平面（Control Plane）**与**代理（Agent）**分离的架构。Agent 负责在每个节点上进行数据采集和执行本地任务，Control Plane 负责集中分析、策略管理、智能预测和统一暴露。
 
 ```mermaid
+
 graph TD
-    subgraph 用户与外部系统（Users & External Systems）
+    subgraph UES[用户与外部系统（Users & External Systems）]
         direction LR
         U1[CLI/UI<br/>（命令行/用户界面）]
         U2[Grafana<br/>（可视化面板）]
