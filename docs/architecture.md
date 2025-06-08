@@ -42,74 +42,8 @@
 
 `ioshelfer` 采用**控制平面（Control Plane）**与**代理（Agent）**分离的架构。Agent 负责在每个节点上进行数据采集和执行本地任务，Control Plane 负责集中分析、策略管理、智能预测和统一暴露。
 
-```mermaid
+<img src="images/architecture_overview.png" width="100%" />
 
-graph TD
-    subgraph UES[用户与外部系统（Users & External Systems）]
-        direction LR
-        U1[CLI/UI<br/>（命令行/用户界面）]
-        U2[Grafana<br/>（可视化面板）]
-        U3[CMDB/ITSM<br/>（配置管理/工单系统）]
-    end
-
-    subgraph CP[控制平面（Control Plane）]
-        direction TB
-        subgraph IE[集成暴露层（Integration & Exposure Layer）]
-            direction LR
-            API[控制API（gRPC）]
-            METRICS[指标导出器（Prometheus Exporter）]
-            NOTIFY[事件通知器（Webhook/gRPC）]
-        end
-
-        subgraph CS[核心服务层（Core Service Layer）]
-            direction LR
-            PM[策略管理器（Policy Manager）]
-            RE[修复引擎（Remediation Engine）]
-            PE[预测引擎（Prediction Engine）]
-            CO[混沌编排器（Chaos Orchestrator）]
-        end
-
-        subgraph PA[处理分析层（Processing & Analysis Layer）]
-            direction LR
-            TSDB[时序数据库<br/>（Time-Series DB）]
-            RULE[规则引擎（Rules Engine）]
-        end
-        
-        IE --> CS --> PA
-    end
-    
-    subgraph AG[代理（Agent on Node）]
-        direction TB
-        
-        EXEC[执行器（Executor）]
-        
-        subgraph COL[数据采集层（Data Collection Layer）]
-            direction LR
-            C1[RAID卡采集器]
-            C2[硬盘采集器<br/>（SMART & IO Stats）]
-            C3[网络采集器<br/>（eBPF-based）]
-        end
-        
-        EXEC --> COL
-    end
-
-    U1 --> API
-    U2 --> METRICS
-    NOTIFY --> U3
-    API <--> PM
-    PM <--> AG
-    AG --原始数据--> PA
-    PA --分析结果--> CS
-    
-    classDef user fill:#c9d,stroke:#333,stroke-width:2px;
-    classDef control fill:#dae8fc,stroke:#333,stroke-width:2px;
-    classDef agent fill:#d5e8d4,stroke:#333,stroke-width:2px;
-    
-    class U1,U2,U3 user;
-    class CP,IE,CS,PA,API,METRICS,NOTIFY,PM,RE,PE,CO,TSDB,RULE control;
-    class AG,EXEC,COL,C1,C2,C3 agent;
-
-```
 上图展示了系统的核心组件及其交互关系：
 - **用户与外部系统**：通过 `CLI/UI` 管理策略，通过 `Grafana` 查看指标，外部系统如 `CMDB` 通过 `Webhook/gRPC` 接收事件。
 - **控制平面（Control Plane）**：是系统的大脑。
@@ -127,58 +61,8 @@ graph TD
 
 在 Kubernetes 环境中，`ioshelfer` 的部署遵循 Operator 模式，以实现自动化生命周期管理。
 
-```mermaid
-graph TD
-    subgraph KCN[K8s 控制平面节点（Control Plane Node）]
-        K8S_API[K8s API Server]
-        ETCD[etcd]
-    end
+<img src="images/deploy.png" width="100%" />
 
-    subgraph KWN1[K8s 工作节点（Worker Node 1）]
-        direction TB
-        P1[应用Pod A]
-        AGENT1[ioshelfer-agent Pod]
-        KUBELET1[Kubelet]
-    end
-    
-    subgraph KWN2[K8s 工作节点（Worker Node 2）]
-        direction TB
-        P2[应用Pod B]
-        AGENT2[ioshelfer-agent Pod]
-        KUBELET2[Kubelet]
-    end
-
-    subgraph MM[监控与管理（Monitoring & Management）]
-        SERVER[ioshelfer-server Deployment]
-        PROM[Prometheus]
-        GRA[Grafana]
-    end
-    
-    CRD[SubHealthPolicy CRD] -- Watch --> SERVER
-    SERVER -- Distribute Policy --> AGENT1
-    SERVER -- Distribute Policy --> AGENT2
-    AGENT1 -- Collect Metrics --> SERVER
-    AGENT2 -- Collect Metrics --> SERVER
-    AGENT1 -- eBPF Probe --> P1
-    AGENT2 -- eBPF Probe --> P2
-    
-    SERVER -- Expose Metrics --> PROM
-    PROM -- Query --> GRA
-    SERVER -- Manage --> K8S_API
-
-    K8S_API <--> CRD
-    K8S_API <--> ETCD
-    KUBELET1 <--> K8S_API
-    KUBELET2 <--> K8S_API
-    
-    classDef k8s_control fill:#f8cecc,stroke:#000;
-    classDef k8s_worker fill:#dae8fc,stroke:#000;
-    classDef mgmt fill:#d5e8d4,stroke:#000;
-
-    class K8S_API,ETCD k8s_control;
-    class P1,AGENT1,KUBELET1,P2,AGENT2,KUBELET2 k8s_worker;
-    class SERVER,PROM,GRA,CRD mgmt;
-```
 此部署图要点：
 - **ioshelfer-server**：以 `Deployment` 的形式部署，负责集群范围内的管理和分析。它通过 `Watch` 自定义的 `CRD` (例如 `SubHealthPolicy`) 来获取用户意图。
 - **ioshelfer-agent**：以 `DaemonSet` 的形式部署，确保每个工作节点上都有一个实例。Agent Pod 具有必要的权限（如 `privileged`）来加载 eBPF 程序和访问宿主机设备。

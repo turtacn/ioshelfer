@@ -59,7 +59,7 @@ These issues are often transient, hard to detect with traditional monitoring (wh
 
 For a detailed design, please see the [Architecture Document](./docs/architecture.md).
 
-![Architecture Diagram](https://raw.githubusercontent.com/turtacn/ioshelfer/main/docs/images/architecture_overview_en.png)
+![架构图](docs/images/architecture_overview.png)
 *(Note: This image would be a simplified version of the detailed Mermaid diagram in `docs/architecture.md`)*
 
 ### Quick Start & Usage Snippets

@@ -59,7 +59,7 @@
 
 详细设计请参见 [架构设计文档](./docs/architecture.md)。
 
-![架构图](https://raw.githubusercontent.com/turtacn/ioshelfer/main/docs/images/architecture_overview_zh.png)
+![架构图](docs/images/architecture_overview.png)
 *(注：此图为 `docs/architecture.md` 中详细 Mermaid 图的简化版本)*
 
 ### 快速上手与用法示例
