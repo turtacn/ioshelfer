@@ -408,7 +408,7 @@ logger.Info("检测到RAID控制器亚健康",
 
 ## 四、项目目录结构
 
-IOShelfer遵循标准Golang项目结构，结合领域驱动设计（DDD）理念，确保模块化与可维护性：
+IOShelfer遵循标准项目结构，确保模块化与可维护性：
 
 ```
 ioshelfer/
