@@ -11,11 +11,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"ioshelfer/internal/config"
-	"ioshelfer/internal/core/detection"
-	"ioshelfer/internal/core/prediction"
-	"ioshelfer/internal/logger"
-	"ioshelfer/internal/storage/models"
+	"github.com/turtacn/ioshelfer/internal"
+	"github.com/turtacn/ioshelfer/internal/core/detection"
+	"github.com/turtacn/ioshelfer/internal/core/prediction"
+	"github.com/turtacn/ioshelfer/internal/common/logger"
+	"github.com/turtacn/ioshelfer/internal/infra/storage"
 )
 
 // 版本信息
