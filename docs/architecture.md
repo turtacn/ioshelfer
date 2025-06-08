@@ -129,26 +129,26 @@ graph TD
 
 ```mermaid
 graph TD
-    subgraph K8s 控制平面节点（Control Plane Node）
+    subgraph KCN[K8s 控制平面节点（Control Plane Node）]
         K8S_API[K8s API Server]
         ETCD[etcd]
     end
 
-    subgraph K8s 工作节点（Worker Node 1）
+    subgraph KWN1[K8s 工作节点（Worker Node 1）]
         direction TB
         P1[应用Pod A]
         AGENT1[ioshelfer-agent Pod]
         KUBELET1[Kubelet]
     end
     
-    subgraph K8s 工作节点（Worker Node 2）
+    subgraph KWN2[K8s 工作节点（Worker Node 2）]
         direction TB
         P2[应用Pod B]
         AGENT2[ioshelfer-agent Pod]
         KUBELET2[Kubelet]
     end
 
-    subgraph 监控与管理（Monitoring & Management）
+    subgraph MM[监控与管理（Monitoring & Management）]
         SERVER[ioshelfer-server Deployment]
         PROM[Prometheus]
         GRA[Grafana]
