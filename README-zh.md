@@ -128,9 +128,6 @@ sudo ./bin/ioshelfer --config=configs/default.yaml
 ```
 
 ### 基础配置
-继续输出README-zh.md的剩余部分以及任务二：
-
-### 基础配置
 
 ```yaml
 # configs/default.yaml
