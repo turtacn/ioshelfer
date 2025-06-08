@@ -542,3 +542,11 @@ func BenchmarkDetector(b *testing.B) {
 ## 七、总结
 
 IOShelfer通过eBPF技术、AI预测模型和自动化修复机制，解决了传统I/O监控方案的反应性、孤立性和人工依赖问题。其分层架构、模块化设计和高性能实现，确保了在企业级场景下的可扩展性、容错性和安全性。未来，IOShelfer将持续推动I/O系统亚健康检测的行业标准，助力企业实现“零故障”基础设施目标。
+
+## 八、参考资料
+
+\[1] Cilium eBPF Documentation, [https://cilium.io](https://cilium.io)
+\[2] Litmus Chaos Engineering, [https://litmuschaos.io](https://litmuschaos.io)
+\[3] DeepInsight HCI Technical Whitepaper, [https://www.sangfor.com](https://www.sangfor.com)
+\[4] Huawei Cloud AI Cluster, [https://www.huaweicloud.com](https://www.huaweicloud.com)
+\[5] ChaosBlade Project, [https://chaosblade.io](https://chaosblade.io)
