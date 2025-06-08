@@ -1,0 +1,192 @@
+// File: api/v1/ioshelfer.proto
+// Purpose: Defines the gRPC services and message types for the ioshelfer project.
+//          This file is the single source of truth for the API contract between
+//          the ioshelfer-server and ioshelfer-agent, as well as external clients.
+
+syntax = "proto3";
+
+package api.v1;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/turtacn/ioshelfer/api/v1";
+
+// ===================================================================
+//
+// Enum Definitions
+//
+// ===================================================================
+
+// ComponentType defines the type of the hardware or software component being monitored.
+// ComponentType 定义了被监控的硬件或软件组件的类型。
+enum ComponentType {
+  COMPONENT_TYPE_UNSPECIFIED = 0;
+  RAID_CONTROLLER = 1; // RAID Controller. RAID控制器。
+  DISK = 2;              // Physical or logical disk. 物理或逻辑磁盘。
+  NETWORK_INTERFACE = 3; // Network Interface Card (NIC). 网络接口卡。
+  NETWORK_PATH = 4;      // A specific network path or link. 特定网络路径或链路。
+}
+
+// ActionType defines the type of remediation action to be taken.
+// ActionType 定义了要执行的修复动作的类型。
+enum ActionType {
+  ACTION_TYPE_UNSPECIFIED = 0;
+  ISOLATE = 1;  // Isolate the component (e.g., mark disk for removal, reroute traffic). 隔离组件（例如，标记磁盘待移除，重路由流量）。
+  SCRIPT = 2;   // Execute a custom script. 执行自定义脚本。
+  NOTIFY = 3;   // Send a notification. 发送通知。
+  API_CALL = 4; // Make an API call to an external system (e.g., Kubernetes). 调用外部系统API（如Kubernetes）。
+}
+
+// ===================================================================
+//
+// Core Message Definitions
+//
+// ===================================================================
+
+// Metric represents a single data point collected by an agent.
+// Metric 代表由Agent采集的单个数据点。
+message Metric {
+  // The name of the metric (e.g., "p95_latency_ms", "queue_depth").
+  // 指标名称（例如 "p95_latency_ms", "queue_depth"）。
+  string name = 1;
+
+  // The value of the metric.
+  // 指标的值。
+  double value = 2;
+
+  // The time the metric was recorded.
+  // 指标记录的时间。
+  google.protobuf.Timestamp timestamp = 3;
+
+  // Labels providing additional context for the metric (e.g., device="/dev/sda").
+  // 提供额外上下文的标签（例如 device="/dev/sda"）。
+  map<string, string> labels = 4;
+}
+
+// ComponentIdentifier uniquely identifies a monitored component.
+// ComponentIdentifier 唯一标识一个被监控的组件。
+message ComponentIdentifier {
+  // The ID of the node where the component resides.
+  // 组件所在的节点ID。
+  string node_id = 1;
+
+  // The type of the component.
+  // 组件的类型。
+  ComponentType component_type = 2;
+
+  // A unique name or identifier for the component within the node (e.g., "/dev/nvme0n1", "eth0").
+  // 组件在节点内的唯一名称或标识符（例如 "/dev/nvme0n1", "eth0"）。
+  string component_name = 3;
+}
+
+// SubHealthEvent represents a detected sub-health condition.
+// SubHealthEvent 代表一个已检测到的亚健康状态事件。
+message SubHealthEvent {
+  // Unique ID for the event.
+  // 事件的唯一ID。
+  string event_id = 1;
+
+  // The time the event was generated.
+  // 事件生成的时间。
+  google.protobuf.Timestamp timestamp = 2;
+
+  // Identifier for the component that is sub-healthy.
+  // 处于亚健康状态的组件的标识符。
+  ComponentIdentifier component = 3;
+
+  // A list of metrics that contributed to this event.
+  // 导致此事件的一系列指标。
+  repeated Metric contributing_metrics = 4;
+
+  // Name of the policy that triggered this event.
+  // 触发此事件的策略名称。
+  string policy_name = 5;
+
+  // A human-readable summary of the event.
+  // 人类可读的事件摘要。
+  string summary = 6;
+}
+
+// RemediationAction defines an action to be performed by an agent or server.
+// RemediationAction 定义了将由Agent或Server执行的一个动作。
+message RemediationAction {
+  // Unique ID for this action instance.
+  // 此动作实例的唯一ID。
+  string action_id = 1;
+
+  // The type of action to perform.
+  // 要执行的动作类型。
+  ActionType type = 2;
+
+  // The component to target with this action.
+  // 此动作的目标组件。
+  ComponentIdentifier target_component = 3;
+
+  // Parameters for the action (e.g., script path, webhook URL, API payload).
+  // 动作所需的参数（例如，脚本路径、Webhook URL、API负载）。
+  google.protobuf.Struct parameters = 4;
+
+  // Timeout for the action execution.
+  // 动作执行的超时时间。
+  string timeout = 5; // e.g., "30s", "5m"
+}
+
+
+// ===================================================================
+//
+// Service Definitions
+//
+// ===================================================================
+
+// AgentService is implemented by the server and called by agents.
+// AgentService 由服务端实现，由Agent调用。
+service AgentService {
+  // Agents stream sub-health events to the server.
+  // Agent以流式方式向服务端上报亚健康事件。
+  rpc ReportSubHealthEvents(stream SubHealthEvent) returns (ReportSubHealthEventsResponse);
+
+  // Agents can request actions to execute for a given event (proactive check).
+  // Agent可以为一个给定事件请求执行动作（主动检查）。
+  rpc GetRemediationActions(GetRemediationActionsRequest) returns (GetRemediationActionsResponse);
+}
+
+// ControlService is implemented by the server for management purposes.
+// ControlService 由服务端为管理目的而实现。
+service ControlService {
+  // TODO: Add methods for policy management (Create, Get, List, Delete).
+  // TODO: 添加策略管理方法 (Create, Get, List, Delete)。
+}
+
+
+// ===================================================================
+//
+// Request/Response Message Definitions
+//
+// ===================================================================
+
+// Response for the ReportSubHealthEvents RPC.
+// ReportSubHealthEvents RPC的响应。
+message ReportSubHealthEventsResponse {
+  // Acknowledges the number of events received.
+  // 确认已接收的事件数量。
+  int32 received_count = 1;
+}
+
+// Request for the GetRemediationActions RPC.
+// GetRemediationActions RPC的请求。
+message GetRemediationActionsRequest {
+  // The event for which to find remediation actions.
+  // 需要查找修复动作的事件。
+  SubHealthEvent event = 1;
+}
+
+// Response for the GetRemediationActions RPC.
+// GetRemediationActions RPC的响应。
+message GetRemediationActionsResponse {
+  // A list of actions to be taken.
+  // 需要执行的动作列表。
+  repeated RemediationAction actions = 1;
+}
+
+// powered by personal.ai
