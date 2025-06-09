@@ -11,11 +11,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/turtacn/ioshelfer/internal"
+	"github.com/turtacn/ioshelfer/internal/common/logger"
 	"github.com/turtacn/ioshelfer/internal/core/detection"
 	"github.com/turtacn/ioshelfer/internal/core/prediction"
-	"github.com/turtacn/ioshelfer/internal/common/logger"
-	"github.com/turtacn/ioshelfer/internal/infra/storage"
 )
 
 // 版本信息
@@ -27,11 +25,11 @@ var (
 
 // 全局配置和组件
 var (
-	cfgFile    string
-	cfg        *config.Config
-	detector   *detection.Detector
-	predictor  *prediction.Predictor
-	log        = logger.NewLogger()
+	cfgFile   string
+	cfg       *config.Config
+	detector  *detection.Detector
+	predictor *prediction.Predictor
+	log       = logger.NewLogger()
 )
 
 // rootCmd 根命令
@@ -279,9 +277,9 @@ func runList(cmd *cobra.Command, args []string) error {
 var configCmd = &cobra.Command{
 	Use:   "config [action]",
 	Short: "Manage configuration",
-	Long: `Manage IOShelfer configuration. Actions: view, validate, generate-sample`,
-	Args: cobra.ExactArgs(1),
-	RunE: runConfig,
+	Long:  `Manage IOShelfer configuration. Actions: view, validate, generate-sample`,
+	Args:  cobra.ExactArgs(1),
+	RunE:  runConfig,
 }
 
 func runConfig(cmd *cobra.Command, args []string) error {
@@ -312,21 +310,21 @@ type HealthCheckResult struct {
 }
 
 type PredictionResult struct {
-	Device           string    `json:"device"`
-	FailureProbability float64 `json:"failure_probability"`
-	RiskLevel        string    `json:"risk_level"`
-	TimeHorizon      int       `json:"time_horizon_days"`
-	Factors          []string  `json:"contributing_factors,omitempty"`
-	Recommendations  []string  `json:"recommendations,omitempty"`
-	PredictionTime   time.Time `json:"prediction_time"`
+	Device             string    `json:"device"`
+	FailureProbability float64   `json:"failure_probability"`
+	RiskLevel          string    `json:"risk_level"`
+	TimeHorizon        int       `json:"time_horizon_days"`
+	Factors            []string  `json:"contributing_factors,omitempty"`
+	Recommendations    []string  `json:"recommendations,omitempty"`
+	PredictionTime     time.Time `json:"prediction_time"`
 }
 
 type SystemStatus struct {
-	Timestamp  time.Time           `json:"timestamp"`
-	Service    ServiceStatus       `json:"service"`
-	Devices    []DeviceStatus      `json:"devices"`
-	Alerts     []models.Alert      `json:"recent_alerts"`
-	Statistics SystemStatistics    `json:"statistics"`
+	Timestamp  time.Time        `json:"timestamp"`
+	Service    ServiceStatus    `json:"service"`
+	Devices    []DeviceStatus   `json:"devices"`
+	Alerts     []models.Alert   `json:"recent_alerts"`
+	Statistics SystemStatistics `json:"statistics"`
 }
 
 type ServiceStatus struct {
@@ -336,20 +334,20 @@ type ServiceStatus struct {
 }
 
 type DeviceStatus struct {
-	Device      string  `json:"device"`
-	Status      string  `json:"status"`
-	Health      float64 `json:"health_score"`
-	Temperature int     `json:"temperature"`
+	Device      string    `json:"device"`
+	Status      string    `json:"status"`
+	Health      float64   `json:"health_score"`
+	Temperature int       `json:"temperature"`
 	LastCheck   time.Time `json:"last_check"`
 }
 
 type SystemStatistics struct {
-	TotalDevices      int `json:"total_devices"`
-	HealthyDevices    int `json:"healthy_devices"`
-	WarningDevices    int `json:"warning_devices"`
-	CriticalDevices   int `json:"critical_devices"`
-	ActiveAlerts      int `json:"active_alerts"`
-	PredictionsToday  int `json:"predictions_today"`
+	TotalDevices     int `json:"total_devices"`
+	HealthyDevices   int `json:"healthy_devices"`
+	WarningDevices   int `json:"warning_devices"`
+	CriticalDevices  int `json:"critical_devices"`
+	ActiveAlerts     int `json:"active_alerts"`
+	PredictionsToday int `json:"predictions_today"`
 }
 
 // 实现具体的功能函数
@@ -465,7 +463,7 @@ func generateSampleConfig(cmd *cobra.Command) error {
 	sampleCfg := &config.Config{
 		Core: config.CoreConfig{
 			Detection: &config.DetectionConfig{
-				Enabled: true,
+				Enabled:  true,
 				Interval: 3600, // 1 hour
 			},
 			Prediction: &config.PredictionConfig{

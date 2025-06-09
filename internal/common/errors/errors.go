@@ -103,3 +103,7 @@ func Wrap(err error, msg string) error {
 	}
 	return errors.Wrap(err, msg)
 }
+
+func New(msg string, err error) error {
+	return Wrap(err, msg)
+}

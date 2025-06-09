@@ -11,10 +11,8 @@ import (
 	"github.com/spf13/viper"
 
 	api "github.com/turtacn/ioshelfer/api/v1"
-	"github.com/turtacn/ioshelfer/config"
-	"github.com/turtacn/ioshelfer/internal/core"
-	"github.com/turtacn/ioshelfer/internal/infra/ebpf"
 	"github.com/turtacn/ioshelfer/internal/common/logger"
+	"github.com/turtacn/ioshelfer/internal/infra/ebpf"
 )
 
 // version 信息，编译时可通过 ldflags 设置

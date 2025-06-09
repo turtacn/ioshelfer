@@ -1,10 +1,9 @@
 package ebpf
 
 import (
-	"time"
-	"github.com/turtacn/ioshelfer/internal/common/errors"
 	"github.com/turtacn/ioshelfer/internal/common/logger"
 	"go.uber.org/zap"
+	"time"
 )
 
 // RAIDMetrics represents metrics collected for a RAID controller.
@@ -16,13 +15,13 @@ type RAIDMetrics struct {
 
 // DiskMetrics represents metrics collected for a disk device.
 type DiskMetrics struct {
-	IOPSVariance float64    // Variance in IOPS
-	SMART        SMARTData  // SMART attributes
+	IOPSVariance float64   // Variance in IOPS
+	SMART        SMARTData // SMART attributes
 }
 
 // SMARTData represents SMART attributes for a disk.
 type SMARTData struct {
-	ReallocatedSectors int // Number of reallocated sectors
+	ReallocatedSectors int     // Number of reallocated sectors
 	ReadErrorRate      float64 // Raw read error rate
 	Temperature        int     // Disk temperature in Celsius
 }
@@ -70,9 +69,9 @@ func (m *EBPFMonitor) StartMonitor() error {
 func (m *EBPFMonitor) GetRAIDMetrics() (*RAIDMetrics, error) {
 	// Placeholder: Simulate eBPF data collection
 	metrics := &RAIDMetrics{
-		QueueDepth:     150,                  // Mock value
+		QueueDepth:     150,                   // Mock value
 		AvgLatency:     25 * time.Millisecond, // Mock value
-		ErrorRetryRate: 50,                   // Mock value
+		ErrorRetryRate: 50,                    // Mock value
 	}
 
 	logger.Info("collected RAID metrics",
