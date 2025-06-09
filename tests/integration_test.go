@@ -13,17 +13,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"ioshelfer/internal/api"
-	"ioshelfer/internal/config"
-	"ioshelfer/internal/core"
-	"ioshelfer/internal/core/detection"
-	"ioshelfer/internal/core/prediction"
-	"ioshelfer/internal/ebpf"
-	"ioshelfer/internal/logger"
-	"ioshelfer/internal/storage/models"
-	"ioshelfer/pkg/disk"
-	"ioshelfer/pkg/network"
-	"ioshelfer/pkg/raid"
+	api "github.com/turtacn/ioshelfer/internal/v1"
+	"github.com/turtacn/ioshelfer/internal/config"
+	"github.com/turtacn/ioshelfer/internal/core"
+	"github.com/turtacn/ioshelfer/internal/core/detection"
+	"github.com/turtacn/ioshelfer/internal/core/prediction"
+	"github.com/turtacn/ioshelfer/internal/infra/ebpf"
+	"github.com/turtacn/ioshelfer/internal/common/logger"
+	"github.com/turtacn/ioshelfer/internal/infra/storage/models"
+	"github.com/turtacn/ioshelfer/pkg/disk"
+	"github.com/turtacn/ioshelfer/pkg/network"
+	"github.com/turtacn/ioshelfer/pkg/raid"
 )
 
 // TestMain 设置测试环境
