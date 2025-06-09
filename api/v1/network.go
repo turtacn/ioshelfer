@@ -2,13 +2,14 @@
 package v1
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
 
-	"internal/common/logger"
-	"internal/core/detection"
+	"github.com/turtacn/ioshelfer/internal/common/logger"
+	"github.com/turtacn/ioshelfer/internal/core/detection"
 )
 
 // NetworkAPI handles network-related REST API endpoints.
